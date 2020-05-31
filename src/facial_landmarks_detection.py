@@ -2,16 +2,17 @@
 This is a sample class for a model. You may choose to use it as-is or make any changes to it.
 This has been provided just to give you an idea of how to structure your model class.
 '''
+from src.model import EdgeModel
 
-class FacialLandmarksDetectionModel:
+class FacialLandmarksDetectionModel(EdgeModel):
     '''
     Class for the Face Detection Model.
     '''
     def __init__(self, model_name, device='CPU', extensions=None):
         '''
-        TODO: Use this to set your instance variables.
+        DONE: Use this to set your instance variables.
         '''
-        raise NotImplementedError
+        super().__init__(model_name, device, extensions)
 
     def load_model(self):
         '''
@@ -19,7 +20,7 @@ class FacialLandmarksDetectionModel:
         This method is for loading the model to the device specified by the user.
         If your model requires any Plugins, this is where you can load them.
         '''
-        raise NotImplementedError
+        return super()
 
     def predict(self, image):
         '''

@@ -2,8 +2,9 @@
 This is a sample class for a model. You may choose to use it as-is or make any changes to it.
 This has been provided just to give you an idea of how to structure your model class.
 '''
+from src.model import EdgeModel
 
-class HeadPoseEstimationModel:
+class HeadPoseEstimationModel(EdgeModel):
     '''
     Class for the Face Detection Model.
     '''
@@ -11,7 +12,7 @@ class HeadPoseEstimationModel:
         '''
         DONE: Use this to set your instance variables.
         '''
-        raise NotImplementedError
+        super().__init__(model_name, device, extensions)
 
     def load_model(self):
         '''
