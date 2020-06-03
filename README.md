@@ -1,36 +1,101 @@
 # edgeai-computer-pointer-controller
 Computer Pointer Controller app controls the mouse pointer by using eye and head position.
 
-*TODO:* Write a short introduction to your project
+### Introduction
+
+Computer Pointer Controller app controls the mouse pointer by rolling of the eyes and head pose estimation. The app takes video or webcam stream as input and uses Intel OpenVino toolket to run the interference on image frames and move the mouse pointer accordingly. 
 
 ## Project Set Up and Installation
 
-*TODO:* Explain the setup procedures to run your project. For instance, this can include your project directory structure, the models you need to download and where to place them etc. Also include details about how to install the dependencies your project requires.
+### Setup
+1. Install the openvino toolkit following the instructions here. Here are the instructions for [macos](https://docs.openvinotoolkit.org/latest/_docs_install_guides_installing_openvino_macos.html).
 
+2. Clone the repo.
+
+3. Run jupyter notebook: computer-pointer-controller-workflow.ipynb. This will download the needed models in the `./models` directory. Model details are provided in later section.
+
+4. Now source the OpenVino environmnet. 
+```bash
+source /opt/intel/openvino/bin/setupvars.sh -pyver 3.7
+```
+
+Python version can be any python 3 version installed on the computer system.
+
+5. Install all the python requirements from `./requirements.txt`.
+                        
 ## Demo
 
-*TODO:* Explain how to run a basic demo of your model.
+Now that the setup is done, we are ready to run the workflow. 
 
-## Documentation
+1. To run the job either using `queue_job.sh` or python3 code. The shell script is wrapper around following call:
+```bash
+python3 ./src/main.py -fm "$FACE_DETECTION_MODEL_PATH" \
+                -hm "$HEAD_POSE_ESTIMATION_MODEL_PATH" \
+                -lm "$FACIAL_LANDMARKS_DETECTION_MODEL_PATH" \
+                -gm "$GAZE_ESTIMATION_MODEL_PATH" \
+                -i "$INPUT" \
+                -o "$OUTPUT" \
+                -d "$DEVICE" \
+                -t "$THRESHOLD"
+```
+To get the detailed help type:
+```bash
+python3 ./src/main.py -h
+```
 
-*TODO:* Include any documentation that users might need to better understand your project code. For instance, this is a good place to explain the command line arguments that your project supports.
+Here is the help output:
+```bash
+  -h, --help            show this help message and exit
+  -fm FACE_DETECTION_MODEL, --face-detection-model FACE_DETECTION_MODEL
+                        Path to Face Detection model without extension
+  -hm HEAD_POSE_MODEL, --head-pose-model HEAD_POSE_MODEL
+                        Path to Head Pose Estimation model without extension
+  -lm FACIAL_LANDMARKS_MODEL, --facial-landmarks-model FACIAL_LANDMARKS_MODEL
+                        Path to Facial Landmarks Detection model without
+                        extension
+  -gm GAZE_ESTIMATION_MODEL, --gaze-estimation-model GAZE_ESTIMATION_MODEL
+                        Path to Gaze Estimation model without extension
+  -i INPUT, --input INPUT
+                        Path to input video. Use 'cam' for capturing video
+                        stream from camera
+  -l CPU_EXTENSION, --cpu_extension CPU_EXTENSION
+                        MKLDNN (CPU)-targeted custom layers. Absolute path to
+                        shared lib with the kernels impl.
+  -d DEVICE, --device DEVICE
+                        Specify the target device to infer on; Can be: CPU,
+                        GPU, FPGA or MYRIAD
+  -t THRESHOLD, --threshold THRESHOLD
+                        Probability threshold for detections
+  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
+                        Path to output directory
+```
+
+As a sample input, `demo.mp4` is provided as sample video in `./original_videos` directory.
+
 
 ## Benchmarks
+Here are the benchmarks for CPU on my local system:
 
-*TODO:* Include the benchmark results of running your model on multiple hardwares and multiple model precisions. Your benchmarks can include: model loading time, input/output processing time, model inference time etc.
+| Precision | Load Time    | Inference Time | Effective FPS    |
+| --------- | -----------: | -------------- | ---------------- |  
+| FP16      | 497 ms       | 23.2 s         |2.5               |
+| FP32      | 543 ms       | 23.1 s         | 2.4              |  
+| FP16-INT8      | 693 ms       | 23.1 s         | 2.55             |  
+
+Across devices:
+| Precision | Load Time    | Inference Time | Effective FPS    |
+| --------- | -----------: | -------------- | ---------------- |  
+| FP16      | 497 ms       | 23.2 s         |2.5               |
+| FP32      | 543 ms       | 23.1 s         | 2.4              |  
+| FP16-INT8      | 693 ms       | 23.1 s         | 2.55             |  
 
 ## Results
 
-*TODO:* Discuss the benchmark results and explain why you are getting the results you are getting. For instance, explain why there is difference in inference time for FP32, FP16 and INT8 models.
-
-## Stand Out Suggestions
-
-This is where you can provide information about the stand out suggestions that you have attempted.
-
-### Async Inference
-
-If you have used Async Inference in your code, benchmark the results and explain its effects on power and performance of your project.
+Here are the results:
+- Decreasing the precision of model decreases accuracy. It should in general decrease inference time, but not always.
+- With higher precision, model takes slightly higher time in inference, but accuracy drop from FP32 to FP16 is not significant. This may be due to models being trained and simplified in such a way that they work nicely at low precision rates
 
 ### Edge Cases
 
-There will be certain situations that will break your inference flow. For instance, lighting changes or multiple people in the frame. Explain some of the edge cases you encountered in your project and how you solved them to make your project more robust.
+- Face detection currently occurs for 1 face. Not sure how the model will react in case of multiple people in frame
+- Lighting condition expected may result in gaze prediction in case eye vector is not properly recognized.

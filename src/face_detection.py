@@ -33,21 +33,20 @@ class FaceDetectionModel(EdgeModel):
         DONE: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-        EdgeModel.set_initial_frame_size(self, image)
         processed_image = self.preprocess_input(image.copy())
         outputs = self.exec_net.infer({self.input_name: processed_image})
 
         coords = self.preprocess_output(outputs)
         if len(coords) == 0:
-            return 0, 0
+            return None, coords
 
         coords, cropped_face = self._crop_face(image, coords)
         return cropped_face, coords
 
     def _crop_face(self, image, coords):
         coords = coords[0]  # select first detected face
-        h = super().initial_height
-        w = super().initial_width
+        h=image.shape[0]
+        w=image.shape[1]
         coords = coords * np.array([w, h, w, h])
         coords = coords.astype(np.int32)
         cropped_face = image[coords[1]:coords[3], coords[0]:coords[2]]

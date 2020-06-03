@@ -30,6 +30,15 @@ class InputFeeder:
         else:
             self.cap = cv2.imread(self.input_file)
 
+    def get_fps(self):
+        fps = int(self.cap.get(cv2.CAP_PROP_FPS))
+        return fps
+
+    def get_frame_size(self):
+        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        return width, height
+
     def next_batch(self):
         '''
         Returns the next image from either a video file or webcam.

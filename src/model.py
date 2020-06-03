@@ -38,8 +38,9 @@ class EdgeModel(ABC):
         print(self.device)
         print(self.network)
         supported_layers = self.core.query_network(network=self.network, device_name=self.device)
+        print(supported_layers)
         unsupported_layers = [l for l in self.network.layers.keys() if l not in supported_layers]
-
+        print(unsupported_layers)
         return supported_layers, unsupported_layers
 
     def _check_unsupported_layers(self):
@@ -91,9 +92,8 @@ class EdgeModel(ABC):
         '''
         pass
 
-    @abstractmethod
     def check_model(self):
-        pass
+        raise NotImplementedError
 
     def preprocess_input(self, image):
 
@@ -115,15 +115,3 @@ class EdgeModel(ABC):
         '''
 
         pass
-
-    def set_initial_frame_size(self, image):
-        self.initial_height = image.shape[0]
-        self.initial_width = image.shape[1]
-
-    @property
-    def initial_height(self):
-        return self.initial_height
-
-    @property
-    def initial_width(self):
-        return self.initial_width
