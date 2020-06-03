@@ -4,6 +4,9 @@ import os
 import cv2
 
 from face_detection import FaceDetectionModel
+from facial_landmarks_detection import FacialLandmarksDetectionModel
+from gaze_estimation import GazeEstimationModel
+from head_pose_estimation import HeadPoseEstimationModel
 from input_feeder import InputFeeder
 from mouse_controller import MouseController
 
@@ -38,10 +41,8 @@ def get_parser():
     return parser
 
 
-def main():
-    args = get_parser().parse_args()
+def init_feeder(args):
     input_feeder = None
-    print(args)
     if args.input.lower() == "cam":
         input_feeder = InputFeeder("cam")
     else:
@@ -49,30 +50,44 @@ def main():
             logging.error("Unable to find specified video file")
             exit(1)
         input_feeder = InputFeeder("video", args.input)
+    return input_feeder
 
+
+def load_all_models(args):
     model_path_dict = {
         'FaceDetectionModel': args.face_detection_model,
         'FacialLandmarksDetectionModel': args.facial_landmarks_model,
         'GazeEstimationModel': args.gaze_estimation_model,
         'HeadPoseEstimationModel': args.head_pose_model
     }
-
     for fileNameKey in model_path_dict.keys():
-        if not os.path.isfile(model_path_dict[fileNameKey]+".xml"):
+        if not os.path.isfile(model_path_dict[fileNameKey] + ".xml"):
             logging.error("Unable to find specified " + fileNameKey + " xml file")
             exit(1)
-
     fdm = FaceDetectionModel(model_path_dict['FaceDetectionModel'], args.threshold, args.device, args.cpu_extension)
+    fldm = FacialLandmarksDetectionModel(model_path_dict['FacialLandmarksDetectionModel'], args.threshold, args.device,
+                                         args.cpu_extension)
+    gem = GazeEstimationModel(model_path_dict['GazeEstimationModel'], args.threshold, args.device, args.cpu_extension)
+    hpem = HeadPoseEstimationModel(model_path_dict['HeadPoseEstimationModel'], args.threshold, args.device,
+                                   args.cpu_extension)
 
+    fdm.load_model()
+    fldm.load_model()
+    gem.load_model()
+    hpem.load_model()
+    return fdm, fldm, gem, hpem
+
+
+def main():
+    args = get_parser().parse_args()
+    input_feeder = init_feeder(args)
+    fdm, fldm, gem, hpem = load_all_models(args)
     mc = MouseController('medium', 'fast')
 
     input_feeder.load_data()
-    fdm.load_model()
 
     frame_count = 0
-    for has_more_images, frame in input_feeder.next_batch():
-        if not has_more_images:
-            break
+    for frame in input_feeder.next_batch():
         frame_count += 1
         if frame_count % 5 == 0:
             cv2.imshow('video', cv2.resize(frame, (500, 500)))
@@ -85,7 +100,6 @@ def main():
         cropped_face, face_coords = fdm.predict(frame.copy())
         logging.info(cropped_face)
         logging.info(face_coords)
-
 
     logging.error("VideoStream ended...")
     cv2.destroyAllWindows()

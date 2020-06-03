@@ -10,11 +10,11 @@ class GazeEstimationModel(EdgeModel):
     '''
     Class for the Face Detection Model.
     '''
-    def __init__(self, model_name, device='CPU', extensions=None):
+    def __init__(self, model_name, threshold, device='CPU', extensions=None):
         '''
         TODO: Use this to set your instance variables.
         '''
-        super().__init__(model_name, device, extensions)
+        super().__init__(model_name, threshold, device, extensions)
 
     def load_model(self):
         '''

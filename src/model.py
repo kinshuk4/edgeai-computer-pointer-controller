@@ -14,11 +14,12 @@ class EdgeModel(ABC):
     Class for the Face Detection Model.
     '''
 
-    def __init__(self, model_name, device='CPU', extensions=None):
+    def __init__(self, model_name, threshold, device='CPU', extensions=None):
         '''
         DONE: Use this to set your instance variables.
         '''
         self.model_name = model_name
+        self.threshold = threshold
         self.device = device
         self.extensions = extensions
         self.model_weights = model_name + '.bin'
@@ -30,6 +31,8 @@ class EdgeModel(ABC):
         self.input_shape = None
         self.output_names = None
         self.output_shape = None
+        self.initial_height = None
+        self.initial_width = None
 
     def _get_layers(self):
         print(self.device)
@@ -112,3 +115,15 @@ class EdgeModel(ABC):
         '''
 
         pass
+
+    def set_initial_frame_size(self, image):
+        self.initial_height = image.shape[0]
+        self.initial_width = image.shape[1]
+
+    @property
+    def initial_height(self):
+        return self.initial_height
+
+    @property
+    def initial_width(self):
+        return self.initial_width

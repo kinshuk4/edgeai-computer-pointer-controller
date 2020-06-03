@@ -17,10 +17,7 @@ class FaceDetectionModel(EdgeModel):
         '''
         DONE: Use this to set your instance variables.
         '''
-        super().__init__(model_name, device, extensions)
-        self.threshold = threshold
-        self.initial_frame_height = None
-        self.initial_frame_width = None
+        super().__init__(model_name, threshold, device, extensions)
 
     def load_model(self):
         '''
@@ -36,6 +33,7 @@ class FaceDetectionModel(EdgeModel):
         DONE: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
+        EdgeModel.set_initial_frame_size(self, image)
         processed_image = self.preprocess_input(image.copy())
         outputs = self.exec_net.infer({self.input_name: processed_image})
 
@@ -43,13 +41,13 @@ class FaceDetectionModel(EdgeModel):
         if len(coords) == 0:
             return 0, 0
 
-        coords, cropped_face = self._crop_face(coords, image)
+        coords, cropped_face = self._crop_face(image, coords)
         return cropped_face, coords
 
-    def _crop_face(self, coords, image):
+    def _crop_face(self, image, coords):
         coords = coords[0]  # select first detected face
-        h = image.shape[0]
-        w = image.shape[1]
+        h = super().initial_height
+        w = super().initial_width
         coords = coords * np.array([w, h, w, h])
         coords = coords.astype(np.int32)
         cropped_face = image[coords[1]:coords[3], coords[0]:coords[2]]
@@ -81,7 +79,3 @@ class FaceDetectionModel(EdgeModel):
                 ymax = obj[6]
                 coords.append((xmin, ymin, xmax, ymax))
         return coords
-
-    def set_initial_frame_size(self, width, height):
-        self.initial_frame_width = width
-        self.initial_frame_height = height
