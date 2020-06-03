@@ -11,6 +11,10 @@ from input_feeder import InputFeeder
 from mouse_controller import MouseController
 import time
 
+GREEN = (0, 255, 0)
+
+MAGENTA = (255, 0, 255)
+
 
 def get_parser():
     """
@@ -36,7 +40,8 @@ def get_parser():
     parser.add_argument("-t", "--threshold", type=float, default=0.5,
                         help="Probability threshold for detections")
     parser.add_argument("-o", "--output-dir", type=str, default=None, help="Path to output directory")
-
+    parser.add_argument("-v", "--show-intermediate-visualization", type=bool, default=True,
+                        help="Shows intermediate step visualization")
     return parser
 
 
@@ -83,9 +88,38 @@ def load_all_models(args):
     return fd_model, fld_model, ge_model, hpe_model, total_model_load_time
 
 
-def run_workflow(fd_model, fld_model, ge_model, hpe_model, input_feeder, mc):
+def visualize_intermediate_steps(cropped_face, head_pose_angles, eye_coords, left_eye, right_eye, gaze_vector):
+    draw_rectangle(cropped_face, eye_coords, 0)  # left eye
+    draw_rectangle(cropped_face, eye_coords, 1)  # right
+
+    cv2.putText(cropped_face,
+                "Pose Angles: yaw:{:.2f} | pitch:{:.2f} | roll:{:.2f}".format(head_pose_angles[0], head_pose_angles[1],
+                                                                              head_pose_angles[2]), (10, 20),
+                cv2.FONT_HERSHEY_COMPLEX, 0.25, GREEN, 1)
+    i, j, k = int(gaze_vector[0] * 12), int(gaze_vector[1] * 12), 160
+    left_eye_line = draw_line(left_eye, i, j, k)
+    right_eye_line = draw_line(right_eye, i, j, k)
+
+    cropped_face[eye_coords[0][1]:eye_coords[0][3], eye_coords[0][0]:eye_coords[0][2]] = left_eye_line
+    cropped_face[eye_coords[1][1]:eye_coords[1][3], eye_coords[1][0]:eye_coords[1][2]] = right_eye_line
+    cv2.imshow("intermediate-visualization-step", cv2.resize(cropped_face, (500, 500)))
+
+
+def draw_line(eye, i, j, k):
+    eye_line = cv2.line(eye.copy(), (i - k, j - k), (i + k, j + k), MAGENTA, 2)
+    cv2.line(eye_line, (i - k, j + k), (i + k, j - k), MAGENTA, 2)
+    return eye_line
+
+
+def draw_rectangle(cropped_face, eye_coords, i):
+    cv2.rectangle(cropped_face, (eye_coords[i][0] - 10, eye_coords[i][1] - 10),
+                  (eye_coords[i][2] + 10, eye_coords[i][3] + 10), GREEN, 3)
+
+
+def run_workflow(fd_model, fld_model, ge_model, hpe_model, input_feeder, mc, should_visualize):
     input_feeder.load_data()
     fps = input_feeder.get_fps()
+
     frame_count = 0
     frame_threshold = 5
 
@@ -116,21 +150,35 @@ def run_workflow(fd_model, fld_model, ge_model, hpe_model, input_feeder, mc):
         total_inference_time = round(total_time, 1)
         effective_fps = frame_count / total_inference_time
 
+        if should_visualize:
+            visualize_intermediate_steps(cropped_face, head_pose_angles, eye_coords, left_eye,
+                                         right_eye, gaze_vector)
+
         if frame_count % frame_threshold == 0:
             mc.move(new_mouse_coord[0], new_mouse_coord[1])
-    logging.error("VideoStream ended...")
+
+    logging.info("VideoStream ended...")
     cv2.destroyAllWindows()
     input_feeder.close()
     return fps, total_inference_time, effective_fps
 
 
 def main():
+    logging.info("Parsing the arguments.")
     args = get_parser().parse_args()
+
+    logging.info("Arguments parsed successfully. Now initialing feedreader.")
     input_feeder = init_feeder(args)
+
+    logging.info("FeedReader initialized, loading the models.")
     fd_model, fld_model, ge_model, hpe_model, total_model_load_time = load_all_models(args)
     mc = MouseController('medium', 'fast')
-    fps, total_inference_time, effective_fps = run_workflow(fd_model, fld_model, ge_model, hpe_model, input_feeder, mc)
 
+    logging.info("Starting the workflow")
+    fps, total_inference_time, effective_fps = run_workflow(fd_model, fld_model, ge_model, hpe_model, input_feeder, mc,
+                                                            args.show_intermediate_visualization)
+
+    logging.debug("Writing the stats.")
     with open(os.path.join(args.output_dir, 'stats.txt'), 'w') as f:
         f.write(str(total_inference_time) + '\n')
         f.write(str(fps) + '\n')

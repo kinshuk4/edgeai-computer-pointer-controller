@@ -21,7 +21,7 @@ source /opt/intel/openvino/bin/setupvars.sh -pyver 3.7
 
 Python version can be any python 3 version installed on the computer system.
 
-5. Install all the python requirements from `./requirements.txt`.
+5. Install all the python requirements from `./requirements.txt` into the conda or venv environment.
                         
 ## Demo
 
@@ -66,11 +66,13 @@ Here is the help output:
                         GPU, FPGA or MYRIAD
   -t THRESHOLD, --threshold THRESHOLD
                         Probability threshold for detections
-  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
+  -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Path to output directory
+  -v SHOW_INTERMEDIATE_VISUALIZATION, --show-intermediate-visualization SHOW_INTERMEDIATE_VISUALIZATION
+                        Shows intermediate step visualization
 ```
 
-As a sample input, `demo.mp4` is provided as sample video in `./original_videos` directory.
+As a sample input, `demo.mp4` is provided as sample video in `./original_videos` directory. For intermediate visualization, please move the demo video as sometimes the intermediate visualization may be below the actual demo video.
 
 
 ## Benchmarks
