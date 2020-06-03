@@ -32,6 +32,8 @@ class EdgeModel(ABC):
         self.output_shape = None
 
     def _get_layers(self):
+        print(self.device)
+        print(self.network)
         supported_layers = self.core.query_network(network=self.network, device_name=self.device)
         unsupported_layers = [l for l in self.network.layers.keys() if l not in supported_layers]
 
@@ -58,8 +60,10 @@ class EdgeModel(ABC):
         If your model requires any Plugins, this is where you can load them.
         '''
         self.core = IECore()
+        print(self.core)
         try:
             self.network = self.core.read_network(self.model_structure, self.model_weights)
+            print(self.network)
         except Exception as e:
             raise ValueError("Could not Initialise the network. Have you enterred the correct model path?")
 

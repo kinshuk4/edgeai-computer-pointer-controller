@@ -36,8 +36,8 @@ class InputFeeder:
         '''
         while True:
             for _ in range(10):
-                _, frame=self.cap.read()
-            yield frame
+                has_more_images, frame=self.cap.read()
+            yield has_more_images, frame
 
 
     def close(self):

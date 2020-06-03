@@ -3,9 +3,9 @@ from argparse import ArgumentParser
 import os
 import cv2
 
-from src.face_detection import FaceDetectionModel
-from src.input_feeder import InputFeeder
-from src.mouse_controller import MouseController
+from face_detection import FaceDetectionModel
+from input_feeder import InputFeeder
+from mouse_controller import MouseController
 
 
 def get_parser():
@@ -41,6 +41,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
     input_feeder = None
+    print(args)
     if args.input.lower() == "cam":
         input_feeder = InputFeeder("cam")
     else:
@@ -50,18 +51,18 @@ def main():
         input_feeder = InputFeeder("video", args.input)
 
     model_path_dict = {
-        'FaceDetectionModel': args.facedetectionmodel,
-        'FacialLandmarksDetectionModel': args.faciallandmarksmodel,
-        'GazeEstimationModel': args.gazeestimationmodel,
-        'HeadPoseEstimationModel': args.headposemodel
+        'FaceDetectionModel': args.face_detection_model,
+        'FacialLandmarksDetectionModel': args.facial_landmarks_model,
+        'GazeEstimationModel': args.gaze_estimation_model,
+        'HeadPoseEstimationModel': args.head_pose_model
     }
 
     for fileNameKey in model_path_dict.keys():
-        if not os.path.isfile(model_path_dict[fileNameKey]):
+        if not os.path.isfile(model_path_dict[fileNameKey]+".xml"):
             logging.error("Unable to find specified " + fileNameKey + " xml file")
             exit(1)
 
-    fdm = FaceDetectionModel(args.facedetectionmodel, args.device, args.cpu_extension, args.threshold)
+    fdm = FaceDetectionModel(model_path_dict['FaceDetectionModel'], args.threshold, args.device, args.cpu_extension)
 
     mc = MouseController('medium', 'fast')
 
@@ -69,8 +70,8 @@ def main():
     fdm.load_model()
 
     frame_count = 0
-    for ret, frame in input_feeder.next_batch():
-        if not ret:
+    for has_more_images, frame in input_feeder.next_batch():
+        if not has_more_images:
             break
         frame_count += 1
         if frame_count % 5 == 0:
